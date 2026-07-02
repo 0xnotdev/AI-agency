@@ -21,6 +21,6 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379"
     DATABASE_URL: str | None = None
     
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(extra="ignore")
 
 settings = Settings()

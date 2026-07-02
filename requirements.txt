@@ -170,3 +170,6 @@ zstandard==0.25.0
 arq
 redis
 supervisor
+svix
+google-auth
+google-api-python-client
