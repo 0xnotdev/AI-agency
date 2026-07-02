@@ -14,12 +14,14 @@ def onboard_client_core(business_name, niche, services_list, pricing_notes, faq,
     supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
     
     client_id = str(uuid.uuid4())
+    dashboard_token = str(uuid.uuid4())
     
     client_data = {
         "id": client_id,
         "business_name": business_name,
         "niche": niche,
-        "status": "active"
+        "status": "active",
+        "dashboard_token": dashboard_token
     }
     supabase.table("clients").insert(client_data).execute()
     
@@ -34,7 +36,7 @@ def onboard_client_core(business_name, niche, services_list, pricing_notes, faq,
         "inbound_email_address": inbound_email_address
     }
     supabase.table("client_configs").insert(config_data).execute()
-    return client_id
+    return client_id, dashboard_token
 
 def main():
     print("=== Client Onboarding ===")
@@ -68,9 +70,11 @@ def main():
     print("\nCreating client records...")
     
     try:
-        client_id = onboard_client_core(business_name, niche, services_list, pricing_notes, faq, tone_instructions, outbound_offer, whatsapp_phone_number_id, inbound_email_address)
+        client_id, dashboard_token = onboard_client_core(business_name, niche, services_list, pricing_notes, faq, tone_instructions, outbound_offer, whatsapp_phone_number_id, inbound_email_address)
         print(f"\nSuccess! Client onboarded.")
         print(f"Client ID: {client_id}")
+        print(f"Dashboard Token: {dashboard_token}")
+        print(f"Client Dashboard URL: https://ai-agency-production-a6a9.up.railway.app/client/{dashboard_token}")
         
     except Exception as e:
         print(f"\nError onboarding client: {str(e)}")

@@ -19,7 +19,7 @@ def routing_clients():
     email_b = f"email_B_{uuid.uuid4().hex[:8]}@example.com"
 
     # 1. Onboard Client A
-    client_a_id = onboard_client_core(
+    client_a_id, _ = onboard_client_core(
         business_name="Routing Client A",
         niche="Test",
         services_list=["Service A"],
@@ -32,7 +32,7 @@ def routing_clients():
     )
     
     # 2. Onboard Client B
-    client_b_id = onboard_client_core(
+    client_b_id, _ = onboard_client_core(
         business_name="Routing Client B",
         niche="Test",
         services_list=["Service B"],

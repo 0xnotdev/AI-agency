@@ -44,12 +44,12 @@ pytest -v
 
 > **Note**: The RLS isolation test (`tests/test_rls.py`) requires a real Supabase database running on `localhost:54321`. If it cannot connect to the database, the test will gracefully skip itself.
 
-## Task 2: Next Steps
+## Operator Dashboard
 
-For Task 2, you will need to build the conversation engine on top of this foundation. 
+An internal operator dashboard is served at `GET /dashboard`, protected by HTTP Basic Auth using the `DASHBOARD_PASSWORD` environment variable. It provides 4 tabs: Clients, Leads, Conversations, and Events/Audit Log.
 
-**Wire up next:**
-1. **Reactivation Batch Logic**: Query the `leads` table for dead leads and transition them into active `conversations`.
-2. **Channel Senders**: Implement WhatsApp/Email senders in `/services`. Ensure you wrap all external HTTP calls in a robust retry/timeout pattern (e.g., using `tenacity` for retries).
-3. **LLM Integration**: Process incoming `messages` against the `client_configs` instructions and FAQ using an LLM. 
-4. **Idempotency & Auditing**: Continue emitting `events` for every major action (e.g., `message_sent`, `lead_replied`).
+## Client-Facing Read-Only View
+
+Each client gets a unique unguessable UUID token (`dashboard_token` column in `clients` table). The client-facing view is at `GET /client/{dashboard_token}` — no password needed. Share this URL with a client to show them their lead stats and conversation threads.
+
+> **⚠️ Rate Limiting Notice**: The `/client/{token}/api/*` endpoints are currently **not rate limited**. The `dashboard_token` UUID is visible in the URL and serves as the only access control. This is acceptable for v1 with a small number of trusted clients, but must be addressed with proper rate limiting (e.g. via `slowapi`) before scaling beyond a handful of clients.

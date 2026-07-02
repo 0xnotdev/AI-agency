@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadRecover — Operator Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { 800: '#1a1a2e', 900: '#0f0f23', 700: '#25254a' },
+                        accent: '#6c63ff',
+                        accentHover: '#5a52e0',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: #0f0f23; color: #e0e0e0; font-family: 'Inter', system-ui, sans-serif; }
+        .tab-active { background: #6c63ff; color: white; }
+        .tab-inactive { background: #25254a; color: #a0a0c0; }
+        .tab-inactive:hover { background: #35356a; }
+        .card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; }
+        .badge-active { background: #064e3b; color: #34d399; }
+        .badge-paused { background: #78350f; color: #fbbf24; }
+        .badge-new { background: #1e3a5f; color: #60a5fa; }
+        .badge-contacted { background: #3b0764; color: #c084fc; }
+        .badge-replied { background: #064e3b; color: #34d399; }
+        .badge-booked { background: #14532d; color: #4ade80; }
+        .badge-dead { background: #450a0a; color: #f87171; }
+        .badge-handed_off { background: #78350f; color: #fbbf24; }
+        .badge-closed { background: #1f2937; color: #9ca3af; }
+        .badge-inbound { background: #1e3a5f; color: #60a5fa; }
+        .badge-outbound { background: #064e3b; color: #34d399; }
+        .btn { padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .btn-primary { background: #6c63ff; color: white; }
+        .btn-primary:hover { background: #5a52e0; }
+        .btn-danger { background: #991b1b; color: #fca5a5; }
+        .btn-danger:hover { background: #7f1d1d; }
+        .btn-secondary { background: #25254a; color: #a0a0c0; border: 1px solid #3a3a6a; }
+        .btn-secondary:hover { background: #35356a; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 10px 12px; color: #8888aa; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #2a2a4a; }
+        td { padding: 10px 12px; border-bottom: 1px solid #1a1a3a; font-size: 14px; }
+        tr:hover td { background: #15152d; }
+        select, input, textarea { background: #0f0f23; border: 1px solid #2a2a4a; border-radius: 8px; padding: 8px 12px; color: #e0e0e0; font-size: 14px; width: 100%; }
+        select:focus, input:focus, textarea:focus { outline: none; border-color: #6c63ff; }
+        .handoff-banner { background: linear-gradient(135deg, #78350f, #92400e); border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px; }
+        .msg-inbound { background: #1e3a5f; border-radius: 12px 12px 12px 4px; }
+        .msg-outbound { background: #1a3a2e; border-radius: 12px 12px 4px 12px; }
+        .fade-in { animation: fadeIn 0.2s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .loading { display: flex; justify-content: center; padding: 40px; }
+        .spinner { width: 32px; height: 32px; border: 3px solid #2a2a4a; border-top-color: #6c63ff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-white">LeadRecover</h1>
+                <p class="text-sm text-gray-500">Operator Dashboard</p>
+            </div>
+            <div class="text-xs text-gray-600">v1.0 — Internal Use Only</div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-6">
+            <button onclick="switchTab('clients')" id="tab-clients" class="tab-active btn rounded-lg px-5 py-2 text-sm font-medium transition-all">Clients</button>
+            <button onclick="switchTab('leads')" id="tab-leads" class="tab-inactive btn rounded-lg px-5 py-2 text-sm font-medium transition-all">Leads</button>
+            <button onclick="switchTab('conversations')" id="tab-conversations" class="tab-inactive btn rounded-lg px-5 py-2 text-sm font-medium transition-all">Conversations</button>
+            <button onclick="switchTab('events')" id="tab-events" class="tab-inactive btn rounded-lg px-5 py-2 text-sm font-medium transition-all">Events / Audit Log</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="content-clients" class="fade-in"></div>
+        <div id="content-leads" class="hidden fade-in"></div>
+        <div id="content-conversations" class="hidden fade-in"></div>
+        <div id="content-events" class="hidden fade-in"></div>
+    </div>
+
+    <!-- Config Edit Modal -->
+    <div id="config-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+        <div class="card p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-white" id="modal-title">Edit Client Config</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-white text-xl">&times;</button>
+            </div>
+            <form id="config-form" onsubmit="saveConfig(event)">
+                <input type="hidden" id="edit-client-id">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><label class="block text-xs text-gray-500 mb-1">Business Name</label><input id="edit-business_name"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">Niche</label><input id="edit-niche"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">WhatsApp Phone Number ID</label><input id="edit-whatsapp_phone_number_id"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">Inbound Email Address</label><input id="edit-inbound_email_address"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">Booking Link</label><input id="edit-booking_link"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">Tone Instructions</label><input id="edit-tone_instructions"></div>
+                </div>
+                <div class="mb-4"><label class="block text-xs text-gray-500 mb-1">Outbound Offer</label><textarea id="edit-outbound_offer" rows="2"></textarea></div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><label class="block text-xs text-gray-500 mb-1">Services (JSON)</label><textarea id="edit-services" rows="3"></textarea></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">FAQ (JSON)</label><textarea id="edit-faq" rows="3"></textarea></div>
+                </div>
+                <div class="flex gap-3 justify-end">
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ---------- Auth ----------
+        // Credentials are already in the browser session from the Basic Auth prompt.
+        // We extract them by making a test call to /admin/clients.
+        let AUTH_HEADER = '';
+        
+        // Build auth header from current page credentials
+        // The browser already authenticated to load this page, so we reuse those credentials.
+        // We prompt once and store in memory only.
+        (function initAuth() {
+            // The browser's Basic Auth credentials are automatically sent with same-origin requests.
+            // We just need to ensure fetch includes them.
+            AUTH_HEADER = ''; // Will be set by first API call
+        })();
+
+        async function api(path, options = {}) {
+            const resp = await fetch(path, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                credentials: 'same-origin' // Include Basic Auth credentials from browser
+            });
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+                throw new Error(err.detail || resp.statusText);
+            }
+            return resp.json();
+        }
+
+        // ---------- State ----------
+        let allClients = [];
+        let currentTab = 'clients';
+
+        // ---------- Tab switching ----------
+        function switchTab(tab) {
+            currentTab = tab;
+            ['clients', 'leads', 'conversations', 'events'].forEach(t => {
+                document.getElementById('content-' + t).classList.toggle('hidden', t !== tab);
+                document.getElementById('tab-' + t).className = t === tab
+                    ? 'tab-active btn rounded-lg px-5 py-2 text-sm font-medium transition-all'
+                    : 'tab-inactive btn rounded-lg px-5 py-2 text-sm font-medium transition-all';
+            });
+            if (tab === 'clients') loadClients();
+            if (tab === 'leads') renderLeadsTab();
+            if (tab === 'conversations') renderConversationsTab();
+            if (tab === 'events') renderEventsTab();
+        }
+
+        function badge(value) {
+            const cls = 'badge-' + (value || 'unknown');
+            return `<span class="${cls} text-xs font-medium px-2 py-0.5 rounded-full">${value || 'unknown'}</span>`;
+        }
+
+        function loading() {
+            return '<div class="loading"><div class="spinner"></div></div>';
+        }
+
+        function formatDate(d) {
+            if (!d) return '—';
+            return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function clientDropdown(selectedId, onchangeHandler) {
+            let opts = '<option value="">Select a client...</option>';
+            allClients.forEach(c => {
+                const sel = c.id === selectedId ? 'selected' : '';
+                opts += `<option value="${c.id}" ${sel}>${c.business_name} (${c.status})</option>`;
+            });
+            return `<select onchange="${onchangeHandler}" class="max-w-sm mb-4">${opts}</select>`;
+        }
+
+        // ---------- Tab 1: Clients ----------
+        async function loadClients() {
+            const el = document.getElementById('content-clients');
+            el.innerHTML = loading();
+            try {
+                const data = await api('/admin/clients');
+                allClients = data.clients;
+                renderClientsTable(data.clients);
+            } catch (e) {
+                el.innerHTML = `<div class="card p-6 text-red-400">Error: ${e.message}</div>`;
+            }
+        }
+
+        function renderClientsTable(clients) {
+            const el = document.getElementById('content-clients');
+            if (!clients.length) {
+                el.innerHTML = '<div class="card p-6 text-gray-500">No clients found.</div>';
+                return;
+            }
+            let html = `<div class="card overflow-hidden"><table>
+                <thead><tr><th>Business Name</th><th>Niche</th><th>Status</th><th>Created</th><th>Dashboard Token</th><th>Actions</th></tr></thead><tbody>`;
+            clients.forEach(c => {
+                const token = c.dashboard_token || '—';
+                const tokenLink = c.dashboard_token ? `<a href="/client/${c.dashboard_token}" target="_blank" class="text-indigo-400 hover:underline text-xs">${token.substring(0, 8)}…</a>` : '—';
+                html += `<tr>
+                    <td class="font-medium text-white">${c.business_name}</td>
+                    <td>${c.niche || '—'}</td>
+                    <td>${badge(c.status)}</td>
+                    <td class="text-gray-500 text-sm">${formatDate(c.created_at)}</td>
+                    <td>${tokenLink}</td>
+                    <td class="flex gap-2">
+                        <button onclick="toggleStatus('${c.id}', '${c.status}')" class="btn ${c.status === 'active' ? 'btn-danger' : 'btn-primary'} text-xs">
+                            ${c.status === 'active' ? 'Pause' : 'Activate'}
+                        </button>
+                        <button onclick="editConfig('${c.id}')" class="btn btn-secondary text-xs">Edit Config</button>
+                    </td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            el.innerHTML = html;
+        }
+
+        async function toggleStatus(clientId, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+            try {
+                await api(`/admin/clients/${clientId}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: newStatus })
+                });
+                loadClients();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        function editConfig(clientId) {
+            const client = allClients.find(c => c.id === clientId);
+            if (!client) return;
+            const cfg = client.config || {};
+            document.getElementById('edit-client-id').value = clientId;
+            document.getElementById('edit-business_name').value = client.business_name || '';
+            document.getElementById('edit-niche').value = client.niche || '';
+            document.getElementById('edit-whatsapp_phone_number_id').value = cfg.whatsapp_phone_number_id || '';
+            document.getElementById('edit-inbound_email_address').value = cfg.inbound_email_address || '';
+            document.getElementById('edit-booking_link').value = cfg.booking_link || '';
+            document.getElementById('edit-tone_instructions').value = cfg.tone_instructions || '';
+            document.getElementById('edit-outbound_offer').value = cfg.outbound_offer || '';
+            document.getElementById('edit-services').value = JSON.stringify(cfg.services || {}, null, 2);
+            document.getElementById('edit-faq').value = JSON.stringify(cfg.faq || {}, null, 2);
+            document.getElementById('modal-title').textContent = `Edit: ${client.business_name}`;
+            document.getElementById('config-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('config-modal').classList.add('hidden');
+        }
+
+        async function saveConfig(e) {
+            e.preventDefault();
+            const clientId = document.getElementById('edit-client-id').value;
+            const body = {
+                business_name: document.getElementById('edit-business_name').value,
+                niche: document.getElementById('edit-niche').value,
+                whatsapp_phone_number_id: document.getElementById('edit-whatsapp_phone_number_id').value || null,
+                inbound_email_address: document.getElementById('edit-inbound_email_address').value || null,
+                booking_link: document.getElementById('edit-booking_link').value || null,
+                tone_instructions: document.getElementById('edit-tone_instructions').value || null,
+                outbound_offer: document.getElementById('edit-outbound_offer').value || null,
+            };
+            try {
+                body.services = JSON.parse(document.getElementById('edit-services').value || '{}');
+                body.faq = JSON.parse(document.getElementById('edit-faq').value || '{}');
+            } catch (err) {
+                alert('Invalid JSON in Services or FAQ field');
+                return;
+            }
+            try {
+                await api(`/admin/clients/${clientId}/config`, {
+                    method: 'PATCH',
+                    body: JSON.stringify(body)
+                });
+                closeModal();
+                loadClients();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        // ---------- Tab 2: Leads ----------
+        let leadsClientId = '';
+        let leadsStatusFilter = '';
+
+        function renderLeadsTab() {
+            const el = document.getElementById('content-leads');
+            el.innerHTML = `
+                <div class="flex gap-4 items-end mb-4">
+                    ${clientDropdown(leadsClientId, "selectLeadsClient(this.value)")}
+                    <select onchange="filterLeadsStatus(this.value)" class="max-w-xs mb-4">
+                        <option value="">All Statuses</option>
+                        <option value="new" ${leadsStatusFilter === 'new' ? 'selected' : ''}>New</option>
+                        <option value="contacted" ${leadsStatusFilter === 'contacted' ? 'selected' : ''}>Contacted</option>
+                        <option value="replied" ${leadsStatusFilter === 'replied' ? 'selected' : ''}>Replied</option>
+                        <option value="booked" ${leadsStatusFilter === 'booked' ? 'selected' : ''}>Booked</option>
+                        <option value="dead" ${leadsStatusFilter === 'dead' ? 'selected' : ''}>Dead</option>
+                    </select>
+                </div>
+                <div id="leads-content">${leadsClientId ? loading() : '<div class="card p-6 text-gray-500">Select a client to view leads.</div>'}</div>
+            `;
+            if (leadsClientId) loadLeads();
+        }
+
+        function selectLeadsClient(id) { leadsClientId = id; leadsStatusFilter = ''; renderLeadsTab(); }
+        function filterLeadsStatus(s) { leadsStatusFilter = s; loadLeads(); }
+
+        async function loadLeads() {
+            const el = document.getElementById('leads-content');
+            el.innerHTML = loading();
+            try {
+                let url = `/admin/clients/${leadsClientId}/leads`;
+                if (leadsStatusFilter) url += `?status_filter=${leadsStatusFilter}`;
+                const data = await api(url);
+                renderLeadsTable(data);
+            } catch (e) {
+                el.innerHTML = `<div class="card p-6 text-red-400">Error: ${e.message}</div>`;
+            }
+        }
+
+        function renderLeadsTable(data) {
+            const el = document.getElementById('leads-content');
+            const leads = data.leads;
+            let html = `<div class="card p-4 mb-4 flex gap-6">
+                <span class="text-sm text-gray-400">Total: <strong class="text-white">${data.count}</strong></span>
+            </div>`;
+            if (!leads.length) {
+                html += '<div class="card p-6 text-gray-500">No leads found.</div>';
+                el.innerHTML = html;
+                return;
+            }
+            html += `<div class="card overflow-hidden"><table>
+                <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Source</th><th>Status</th><th>Last Contacted</th></tr></thead><tbody>`;
+            leads.forEach(l => {
+                html += `<tr>
+                    <td class="font-medium text-white">${l.name}</td>
+                    <td>${l.phone || '—'}</td>
+                    <td>${l.email || '—'}</td>
+                    <td>${badge(l.source)}</td>
+                    <td>${badge(l.status)}</td>
+                    <td class="text-gray-500 text-sm">${formatDate(l.last_contacted_at)}</td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            el.innerHTML = html;
+        }
+
+        // ---------- Tab 3: Conversations ----------
+        let convsClientId = '';
+        let expandedConvId = null;
+
+        function renderConversationsTab() {
+            const el = document.getElementById('content-conversations');
+            el.innerHTML = `
+                ${clientDropdown(convsClientId, "selectConvsClient(this.value)")}
+                <div id="convs-content">${convsClientId ? loading() : '<div class="card p-6 text-gray-500">Select a client to view conversations.</div>'}</div>
+            `;
+            if (convsClientId) loadConversations();
+        }
+
+        function selectConvsClient(id) { convsClientId = id; expandedConvId = null; renderConversationsTab(); }
+
+        async function loadConversations() {
+            const el = document.getElementById('convs-content');
+            el.innerHTML = loading();
+            try {
+                const data = await api(`/admin/clients/${convsClientId}/conversations`);
+                renderConversationsList(data.conversations);
+            } catch (e) {
+                el.innerHTML = `<div class="card p-6 text-red-400">Error: ${e.message}</div>`;
+            }
+        }
+
+        function renderConversationsList(convs) {
+            const el = document.getElementById('convs-content');
+            if (!convs.length) {
+                el.innerHTML = '<div class="card p-6 text-gray-500">No conversations found.</div>';
+                return;
+            }
+            let html = '';
+            convs.forEach(c => {
+                const lead = c.leads || {};
+                const lastMsg = c.last_message;
+                const isHandoff = c.status === 'handed_off';
+                html += `<div class="card p-4 mb-3 cursor-pointer hover:border-indigo-500/50 transition-all" onclick="toggleConv('${c.id}')">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="font-medium text-white">${lead.name || '—'}</span>
+                            <span class="text-gray-500 text-sm ml-2">${lead.phone || lead.email || ''}</span>
+                            <span class="ml-2">${badge(c.channel)}</span>
+                            <span class="ml-1">${badge(c.status)}</span>
+                        </div>
+                        <span class="text-gray-600 text-xs">${lastMsg ? formatDate(lastMsg.created_at) : ''}</span>
+                    </div>
+                    ${lastMsg ? `<p class="text-sm text-gray-400 mt-1 truncate">${badge(lastMsg.direction)} ${lastMsg.content}</p>` : ''}
+                    ${isHandoff ? `<div class="handoff-banner mt-3 flex justify-between items-center">
+                        <span class="text-sm font-medium text-amber-200">⚠️ Human handoff required</span>
+                        <button onclick="event.stopPropagation(); closeConv('${c.id}')" class="btn btn-primary text-xs">Mark Closed</button>
+                    </div>` : ''}
+                </div>`;
+                html += `<div id="conv-thread-${c.id}" class="hidden mb-4"></div>`;
+            });
+            el.innerHTML = html;
+            if (expandedConvId) loadThread(expandedConvId);
+        }
+
+        async function toggleConv(convId) {
+            const threadEl = document.getElementById('conv-thread-' + convId);
+            if (expandedConvId === convId) {
+                threadEl.classList.add('hidden');
+                expandedConvId = null;
+                return;
+            }
+            if (expandedConvId) {
+                const prev = document.getElementById('conv-thread-' + expandedConvId);
+                if (prev) prev.classList.add('hidden');
+            }
+            expandedConvId = convId;
+            threadEl.classList.remove('hidden');
+            threadEl.innerHTML = loading();
+            await loadThread(convId);
+        }
+
+        async function loadThread(convId) {
+            const el = document.getElementById('conv-thread-' + convId);
+            try {
+                const data = await api(`/admin/conversations/${convId}/messages`);
+                let html = '<div class="pl-4 border-l-2 border-indigo-900 space-y-2">';
+                data.messages.forEach(m => {
+                    const cls = m.direction === 'inbound' ? 'msg-inbound' : 'msg-outbound';
+                    const align = m.direction === 'outbound' ? 'ml-12' : 'mr-12';
+                    html += `<div class="${cls} ${align} p-3">
+                        <div class="flex justify-between items-center mb-1">
+                            ${badge(m.direction)}
+                            <span class="text-xs text-gray-600">${formatDate(m.created_at)}</span>
+                        </div>
+                        <p class="text-sm text-gray-200">${m.content}</p>
+                    </div>`;
+                });
+                html += '</div>';
+                el.innerHTML = html;
+            } catch (e) {
+                el.innerHTML = `<div class="text-red-400 text-sm p-2">Error: ${e.message}</div>`;
+            }
+        }
+
+        async function closeConv(convId) {
+            try {
+                await api(`/admin/conversations/${convId}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'closed' })
+                });
+                loadConversations();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        // ---------- Tab 4: Events ----------
+        let eventsClientId = '';
+        let eventsTypeFilter = '';
+
+        function renderEventsTab() {
+            const el = document.getElementById('content-events');
+            el.innerHTML = `
+                <div class="flex gap-4 items-end mb-4">
+                    ${clientDropdown(eventsClientId, "selectEventsClient(this.value)")}
+                    <input type="text" placeholder="Filter by event type (e.g. lead_created, error)" value="${eventsTypeFilter}" onchange="filterEventsType(this.value)" class="max-w-xs mb-4">
+                </div>
+                <div id="events-content">${eventsClientId ? loading() : '<div class="card p-6 text-gray-500">Select a client to view events.</div>'}</div>
+            `;
+            if (eventsClientId) loadEvents();
+        }
+
+        function selectEventsClient(id) { eventsClientId = id; eventsTypeFilter = ''; renderEventsTab(); }
+        function filterEventsType(t) { eventsTypeFilter = t; loadEvents(); }
+
+        async function loadEvents() {
+            const el = document.getElementById('events-content');
+            el.innerHTML = loading();
+            try {
+                let url = `/admin/clients/${eventsClientId}/events`;
+                if (eventsTypeFilter) url += `?type_filter=${eventsTypeFilter}`;
+                const data = await api(url);
+                renderEventsTable(data.events);
+            } catch (e) {
+                el.innerHTML = `<div class="card p-6 text-red-400">Error: ${e.message}</div>`;
+            }
+        }
+
+        function renderEventsTable(events) {
+            const el = document.getElementById('events-content');
+            if (!events.length) {
+                el.innerHTML = '<div class="card p-6 text-gray-500">No events found.</div>';
+                return;
+            }
+            let html = `<div class="card overflow-hidden"><table>
+                <thead><tr><th>Type</th><th>Payload</th><th>Timestamp</th></tr></thead><tbody>`;
+            events.forEach(ev => {
+                const payloadStr = JSON.stringify(ev.payload || {});
+                const preview = payloadStr.length > 120 ? payloadStr.substring(0, 120) + '…' : payloadStr;
+                html += `<tr>
+                    <td>${badge(ev.type)}</td>
+                    <td class="text-gray-400 text-xs font-mono">${preview}</td>
+                    <td class="text-gray-500 text-sm">${formatDate(ev.created_at)}</td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            el.innerHTML = html;
+        }
+
+        // ---------- Init ----------
+        loadClients();
+    </script>
+</body>
+</html>

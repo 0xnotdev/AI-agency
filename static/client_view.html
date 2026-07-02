@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Dashboard — LeadRecover</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { 800: '#1a1a2e', 900: '#0f0f23', 700: '#25254a' },
+                        accent: '#6c63ff',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: #0f0f23; color: #e0e0e0; font-family: 'Inter', system-ui, sans-serif; }
+        .card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; }
+        .stat-card { background: linear-gradient(135deg, #1a1a2e, #25254a); border: 1px solid #2a2a4a; border-radius: 12px; }
+        .badge-new { background: #1e3a5f; color: #60a5fa; }
+        .badge-contacted { background: #3b0764; color: #c084fc; }
+        .badge-replied { background: #064e3b; color: #34d399; }
+        .badge-booked { background: #14532d; color: #4ade80; }
+        .badge-dead { background: #450a0a; color: #f87171; }
+        .badge-inbound { background: #1e3a5f; color: #60a5fa; }
+        .badge-outbound { background: #064e3b; color: #34d399; }
+        .badge-active { background: #064e3b; color: #34d399; }
+        .badge-handed_off { background: #78350f; color: #fbbf24; }
+        .badge-closed { background: #1f2937; color: #9ca3af; }
+        .msg-inbound { background: #1e3a5f; border-radius: 12px 12px 12px 4px; }
+        .msg-outbound { background: #1a3a2e; border-radius: 12px 12px 4px 12px; }
+        .loading { display: flex; justify-content: center; padding: 40px; }
+        .spinner { width: 32px; height: 32px; border: 3px solid #2a2a4a; border-top-color: #6c63ff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-white mb-1">Your Results Dashboard</h1>
+            <p class="text-gray-500">Powered by LeadRecover</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div id="summary-cards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
+
+        <!-- Weekly Stats -->
+        <div id="weekly-stats" class="card p-5 mb-8"></div>
+
+        <!-- Conversations -->
+        <h2 class="text-lg font-semibold text-white mb-4">Conversations</h2>
+        <div id="conversations-list"></div>
+    </div>
+
+    <script>
+        // Extract dashboard token from URL path
+        const pathParts = window.location.pathname.split('/');
+        const DASHBOARD_TOKEN = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+
+        function badge(value) {
+            return `<span class="badge-${value || 'unknown'} text-xs font-medium px-2 py-0.5 rounded-full">${value || 'unknown'}</span>`;
+        }
+
+        function loading() {
+            return '<div class="loading"><div class="spinner"></div></div>';
+        }
+
+        function formatDate(d) {
+            if (!d) return '—';
+            return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function api(path) {
+            const resp = await fetch(path);
+            if (!resp.ok) throw new Error('Failed to load data');
+            return resp.json();
+        }
+
+        // ---------- Load Summary ----------
+        async function loadSummary() {
+            const cardsEl = document.getElementById('summary-cards');
+            const weeklyEl = document.getElementById('weekly-stats');
+            cardsEl.innerHTML = loading();
+
+            try {
+                const data = await api(`/client/${DASHBOARD_TOKEN}/api/summary`);
+                const counts = data.lead_counts || {};
+                const statuses = ['new', 'contacted', 'replied', 'booked', 'dead'];
+                const labels = { new: 'New Leads', contacted: 'Contacted', replied: 'Replied', booked: 'Booked', dead: 'Dead' };
+                const icons = { new: '📥', contacted: '📤', replied: '💬', booked: '📅', dead: '💀' };
+
+                let cardsHtml = `<div class="stat-card p-5 col-span-2 md:col-span-1">
+                    <p class="text-3xl font-bold text-white">${data.total_leads}</p>
+                    <p class="text-sm text-gray-500 mt-1">Total Leads</p>
+                </div>`;
+                statuses.forEach(s => {
+                    if (s === 'dead') return;
+                    cardsHtml += `<div class="stat-card p-5">
+                        <p class="text-2xl font-bold text-white">${counts[s] || 0}</p>
+                        <p class="text-sm text-gray-500 mt-1">${icons[s]} ${labels[s]}</p>
+                    </div>`;
+                });
+                cardsEl.innerHTML = cardsHtml;
+
+                const w = data.weekly || {};
+                weeklyEl.innerHTML = `
+                    <h3 class="text-sm font-semibold text-gray-400 mb-3">📊 This Week</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div><p class="text-2xl font-bold text-indigo-400">${w.leads_contacted}</p><p class="text-xs text-gray-500">Leads Contacted</p></div>
+                        <div><p class="text-2xl font-bold text-green-400">${w.replies_received}</p><p class="text-xs text-gray-500">Replies Received</p></div>
+                        <div><p class="text-2xl font-bold text-amber-400">${w.appointments_booked}</p><p class="text-xs text-gray-500">Appointments Booked</p></div>
+                    </div>
+                `;
+            } catch (e) {
+                cardsEl.innerHTML = `<div class="card p-6 text-red-400 col-span-4">Error loading summary: ${e.message}</div>`;
+                weeklyEl.innerHTML = '';
+            }
+        }
+
+        // ---------- Load Conversations ----------
+        async function loadConversations() {
+            const el = document.getElementById('conversations-list');
+            el.innerHTML = loading();
+
+            try {
+                const data = await api(`/client/${DASHBOARD_TOKEN}/api/conversations`);
+                const convs = data.conversations || [];
+                if (!convs.length) {
+                    el.innerHTML = '<div class="card p-6 text-gray-500">No conversations yet.</div>';
+                    return;
+                }
+
+                let html = '';
+                convs.forEach(c => {
+                    const lead = c.leads || {};
+                    const lastMsg = c.last_message;
+                    html += `<div class="card p-4 mb-3 cursor-pointer hover:border-indigo-500/50 transition-all" onclick="toggleConv('${c.id}')">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="font-medium text-white">${lead.name || '—'}</span>
+                                <span class="text-gray-500 text-sm ml-2">${lead.phone || lead.email || ''}</span>
+                                <span class="ml-2">${badge(c.channel)}</span>
+                                <span class="ml-1">${badge(c.status)}</span>
+                            </div>
+                            <span class="text-gray-600 text-xs">${lastMsg ? formatDate(lastMsg.created_at) : ''}</span>
+                        </div>
+                        ${lastMsg ? `<p class="text-sm text-gray-400 mt-1 truncate">${badge(lastMsg.direction)} ${lastMsg.content}</p>` : ''}
+                    </div>`;
+                    html += `<div id="conv-thread-${c.id}" class="hidden mb-4"></div>`;
+                });
+                el.innerHTML = html;
+            } catch (e) {
+                el.innerHTML = `<div class="card p-6 text-red-400">Error: ${e.message}</div>`;
+            }
+        }
+
+        let expandedConvId = null;
+
+        async function toggleConv(convId) {
+            const threadEl = document.getElementById('conv-thread-' + convId);
+            if (expandedConvId === convId) {
+                threadEl.classList.add('hidden');
+                expandedConvId = null;
+                return;
+            }
+            if (expandedConvId) {
+                const prev = document.getElementById('conv-thread-' + expandedConvId);
+                if (prev) prev.classList.add('hidden');
+            }
+            expandedConvId = convId;
+            threadEl.classList.remove('hidden');
+            threadEl.innerHTML = loading();
+
+            try {
+                const data = await api(`/client/${DASHBOARD_TOKEN}/api/conversations/${convId}/messages`);
+                let html = '<div class="pl-4 border-l-2 border-indigo-900 space-y-2">';
+                (data.messages || []).forEach(m => {
+                    const cls = m.direction === 'inbound' ? 'msg-inbound' : 'msg-outbound';
+                    const align = m.direction === 'outbound' ? 'ml-12' : 'mr-12';
+                    html += `<div class="${cls} ${align} p-3">
+                        <div class="flex justify-between items-center mb-1">
+                            ${badge(m.direction)}
+                            <span class="text-xs text-gray-600">${formatDate(m.created_at)}</span>
+                        </div>
+                        <p class="text-sm text-gray-200">${m.content}</p>
+                    </div>`;
+                });
+                html += '</div>';
+                threadEl.innerHTML = html;
+            } catch (e) {
+                threadEl.innerHTML = `<div class="text-red-400 text-sm p-2">Error: ${e.message}</div>`;
+            }
+        }
+
+        // ---------- Init ----------
+        loadSummary();
+        loadConversations();
+    </script>
+</body>
+</html>

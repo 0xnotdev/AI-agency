@@ -22,7 +22,7 @@ def test_client_id():
     service = get_service_client()
     
     # 1. Onboard a test client
-    client_id = onboard_client_core(
+    client_id, _ = onboard_client_core(
         business_name="Reactivation Test Business",
         niche="Testing",
         services_list=["Testing"],
