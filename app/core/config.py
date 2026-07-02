@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     TELEGRAM_ADMIN_CHAT_ID: str | None = None
     
     # Redis Queue Config
-    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_URL: str
     DATABASE_URL: str | None = None
     
     model_config = SettingsConfigDict(extra="ignore")
