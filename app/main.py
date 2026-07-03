@@ -215,7 +215,7 @@ async def get_chat_history():
     lead_id = lead_resp.data[0]["id"]
     
     # Find active conversation
-    conv_resp = scoped.table("conversations").select("id").eq("lead_id", lead_id).order("created_at.desc").limit(1).execute()
+    conv_resp = scoped.table("conversations").select("id").eq("lead_id", lead_id).order("created_at", desc=True).limit(1).execute()
     if not conv_resp.data: return []
     conv_id = conv_resp.data[0]["id"]
     
