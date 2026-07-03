@@ -62,9 +62,18 @@ def check_availability(calendar_tokens: dict, client_id: str, start_time: str, e
         
     creds = _get_valid_credentials(calendar_tokens, client_id)
     
+    # Convert string to datetime and ensure they are timezone-aware
+    dt_start = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+    if dt_start.tzinfo is None:
+        dt_start = dt_start.replace(tzinfo=timezone.utc)
+        
+    dt_end = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+    if dt_end.tzinfo is None:
+        dt_end = dt_end.replace(tzinfo=timezone.utc)
+        
     payload = {
-        "timeMin": start_time,
-        "timeMax": end_time,
+        "timeMin": dt_start.isoformat(),
+        "timeMax": dt_end.isoformat(),
         "timeZone": "UTC",
         "items": [{"id": "primary"}]
     }
@@ -82,10 +91,6 @@ def check_availability(calendar_tokens: dict, client_id: str, start_time: str, e
     busy_slots = data.get("calendars", {}).get("primary", {}).get("busy", [])
     
     # Generate 30-minute slots between start and end
-    # Convert string to datetime for manipulation
-    dt_start = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
-    dt_end = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
-    
     available_slots = []
     current_slot = dt_start
     
