@@ -222,3 +222,12 @@ async def get_chat_history():
     # Get messages
     msgs_resp = scoped.table("messages").select("content, direction, created_at").eq("conversation_id", conv_id).order("created_at").execute()
     return msgs_resp.data
+
+@app.get("/api/test-error")
+async def get_test_error():
+    import traceback
+    try:
+        await get_chat_history()
+    except Exception as e:
+        return {"traceback": traceback.format_exc()}
+    return {"status": "success"}
