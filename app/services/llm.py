@@ -155,7 +155,7 @@ def _call_openrouter(system_prompt: str, conversation_history: List[Dict[str, An
                         result = json.dumps(slots)
                     except Exception as e:
                         logger.error(f"Error checking calendar: {str(e)}", exc_info=True)
-                        result = f"Error checking calendar: {str(e)}"
+                        result = f"System Error: The tool failed to execute. You likely provided an invalid date format. You MUST provide strict ISO-8601 timestamps (e.g. 2026-07-06T13:00:00+00:00). Please call the tool again with the correct format. Details: {str(e)}"
             elif tool_call.function.name == "book_meeting_tool":
                 if not calendar_tokens:
                     result = "Error: Calendar is not connected."
@@ -164,7 +164,8 @@ def _call_openrouter(system_prompt: str, conversation_history: List[Dict[str, An
                         link = book_calendar_event(calendar_tokens, client_id, lead_name, lead_phone, args["start_time_iso"], args["end_time_iso"], args.get("meeting_summary"))
                         result = f"Success! Meeting booked. Link: {link}"
                     except Exception as e:
-                        result = f"Error booking meeting: {str(e)}"
+                        logger.error(f"Error booking calendar: {str(e)}", exc_info=True)
+                        result = f"System Error: The tool failed to execute. You likely provided an invalid date format. You MUST provide strict ISO-8601 timestamps. Please call the tool again with the correct format. Details: {str(e)}"
             else:
                 result = "Error: Unknown function"
                 

@@ -81,6 +81,10 @@ def check_availability(calendar_tokens: dict, client_id: str, start_time: str, e
     if dt_end.tzinfo is None:
         dt_end = dt_end.replace(tzinfo=timezone.utc)
         
+    # Failsafe: if the LLM generates a 0-hour window or backwards window, force a 4-hour window
+    if dt_end <= dt_start:
+        dt_end = dt_start + timedelta(hours=4)
+        
     payload = {
         "timeMin": dt_start.isoformat(),
         "timeMax": dt_end.isoformat(),
