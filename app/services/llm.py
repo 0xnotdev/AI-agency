@@ -118,7 +118,7 @@ def _call_openrouter(system_prompt: str, conversation_history: List[Dict[str, An
         
     messages.append({"role": "user", "content": new_message})
     
-    model = "qwen/qwen-2.5-72b-instruct:free"
+    model = "meta-llama/llama-3.1-8b-instruct:free"
     
     response = client.chat.completions.create(
         model=model,
