@@ -47,7 +47,15 @@ def process_inbound_message(
         # 3. Call LLM (which now internally handles Calendar Function Calling)
         llm_response = generate_reply(client_config, history, new_message_content, lead_name, contact_info)
         
-        # 5. Send Reply via Channel
+        # 5. Save Outbound Message
+        scoped.table("messages").insert({
+            "id": str(uuid4()),
+            "conversation_id": conversation_id,
+            "direction": "outbound",
+            "content": llm_response.reply_text
+        }).execute()
+        
+        # 6. Send Reply via Channel
         try:
             if channel == "whatsapp":
                 phone_number_id = client_config.get("whatsapp_phone_number_id")
@@ -60,14 +68,6 @@ def process_inbound_message(
             # We fail the task here because we didn't send the message.
             # Cloud Tasks will retry it.
             raise e
-
-        # 6. Save Outbound Message
-        scoped.table("messages").insert({
-            "id": str(uuid4()),
-            "conversation_id": conversation_id,
-            "direction": "outbound",
-            "content": llm_response.reply_text
-        }).execute()
         
         # 7. Handle Handoff / Alerting
         if llm_response.handoff_required:
