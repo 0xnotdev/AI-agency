@@ -42,6 +42,7 @@ async def google_login(dashboard_token: str):
         
     try:
         flow = get_google_flow(state=dashboard_token)
+        flow.autogenerate_code_verifier = False
         authorization_url, state = flow.authorization_url(
             access_type='offline',
             include_granted_scopes='true',
