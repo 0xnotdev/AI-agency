@@ -118,7 +118,7 @@ def _call_openrouter(system_prompt: str, conversation_history: List[Dict[str, An
         
     messages.append({"role": "user", "content": new_message})
     
-    model = "meta-llama/llama-3.1-8b-instruct:free"
+    model = "openai/gpt-4o-mini"
     
     response = client.chat.completions.create(
         model=model,
