@@ -187,7 +187,7 @@ async def api_test_webhook(req: ChatRequest):
     # Internal HTTP request to the webhook endpoint
     try:
         req_obj = urllib.request.Request(
-            'http://localhost:8000/webhooks/whatsapp', 
+            'https://ai-agency-production-a6a9.up.railway.app/webhooks/whatsapp', 
             data=json.dumps(payload).encode(),
             headers={'Content-Type': 'application/json'}
         )
