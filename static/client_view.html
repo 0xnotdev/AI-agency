@@ -3,69 +3,460 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Dashboard — LeadRecover</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        dark: { 800: '#1a1a2e', 900: '#0f0f23', 700: '#25254a' },
-                        accent: '#6c63ff',
-                    }
-                }
+    <title>Dashboard — LeadRecover AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Base Colors */
+            --bg-base: #06060c;
+            --bg-surface: rgba(20, 20, 35, 0.6);
+            --bg-surface-hover: rgba(30, 30, 50, 0.8);
+            
+            /* Accents */
+            --accent-primary: #7F00FF;
+            --accent-secondary: #E100FF;
+            --accent-glow: rgba(127, 0, 255, 0.3);
+            
+            /* Text */
+            --text-primary: #ffffff;
+            --text-secondary: #9494a8;
+            --text-tertiary: #6b6b7a;
+            
+            /* Status Colors */
+            --status-new-bg: rgba(96, 165, 250, 0.15);
+            --status-new-text: #93c5fd;
+            --status-new-border: rgba(96, 165, 250, 0.3);
+            
+            --status-contacted-bg: rgba(192, 132, 252, 0.15);
+            --status-contacted-text: #d8b4fe;
+            --status-contacted-border: rgba(192, 132, 252, 0.3);
+            
+            --status-replied-bg: rgba(52, 211, 153, 0.15);
+            --status-replied-text: #6ee7b7;
+            --status-replied-border: rgba(52, 211, 153, 0.3);
+            
+            --status-booked-bg: rgba(74, 222, 128, 0.15);
+            --status-booked-text: #86efac;
+            --status-booked-border: rgba(74, 222, 128, 0.3);
+            
+            --status-dead-bg: rgba(248, 113, 113, 0.15);
+            --status-dead-text: #fca5a5;
+            --status-dead-border: rgba(248, 113, 113, 0.3);
+
+            --status-default-bg: rgba(156, 163, 175, 0.15);
+            --status-default-text: #d1d5db;
+            --status-default-border: rgba(156, 163, 175, 0.3);
+            
+            /* Borders */
+            --border-light: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(255, 255, 255, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(127, 0, 255, 0.06), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(225, 0, 255, 0.05), transparent 25%);
+            color: var(--text-primary);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-w-5xl;
+            max-width: 1024px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        /* Utility */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mt-1 { margin-top: 0.25rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Typography */
+        h1, h2, h3 { font-family: 'Outfit', sans-serif; }
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #fff 0%, #a0a0c0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Glassmorphic Card */
+        .card {
+            background: var(--bg-surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-light);
+            border-top: 1px solid var(--border-highlight);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s;
+        }
+
+        /* Header Layout */
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+        .header-actions {
+            margin-top: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .header-actions {
+                position: absolute;
+                top: 0;
+                right: 0;
+                margin-top: 0;
             }
         }
-    </script>
-    <style>
-        body { background: #0f0f23; color: #e0e0e0; font-family: 'Inter', system-ui, sans-serif; }
-        .card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; }
-        .stat-card { background: linear-gradient(135deg, #1a1a2e, #25254a); border: 1px solid #2a2a4a; border-radius: 12px; }
-        .badge-new { background: #1e3a5f; color: #60a5fa; }
-        .badge-contacted { background: #3b0764; color: #c084fc; }
-        .badge-replied { background: #064e3b; color: #34d399; }
-        .badge-booked { background: #14532d; color: #4ade80; }
-        .badge-dead { background: #450a0a; color: #f87171; }
-        .badge-inbound { background: #1e3a5f; color: #60a5fa; }
-        .badge-outbound { background: #064e3b; color: #34d399; }
-        .badge-active { background: #064e3b; color: #34d399; }
-        .badge-handed_off { background: #78350f; color: #fbbf24; }
-        .badge-closed { background: #1f2937; color: #9ca3af; }
-        .msg-inbound { background: #1e3a5f; border-radius: 12px 12px 12px 4px; }
-        .msg-outbound { background: #1a3a2e; border-radius: 12px 12px 4px 12px; }
-        .loading { display: flex; justify-content: center; padding: 40px; }
-        .spinner { width: 32px; height: 32px; border: 3px solid #2a2a4a; border-top-color: #6c63ff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+
+        /* Button CTA */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: linear-gradient(135deg, var(--text-primary), #e2e2e2);
+            color: var(--bg-base);
+            border: none;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+        }
+        .btn svg { width: 1.2rem; height: 1.2rem; }
+
+        /* Banners */
+        .banner {
+            background: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            color: #6ee7b7;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Grid Layouts */
+        .grid { display: grid; gap: 1rem; }
+        .grid-stats { grid-template-columns: repeat(2, 1fr); }
+        .grid-weekly { grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        @media (min-width: 768px) {
+            .grid-stats { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        /* Stat Cards */
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255,255,255,0.15);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .stat-card.total-leads {
+            grid-column: span 2;
+            background: linear-gradient(135deg, rgba(30, 30, 50, 0.6), rgba(20, 20, 35, 0.9));
+        }
+        @media (min-width: 768px) {
+            .stat-card.total-leads { grid-column: span 1; }
+        }
+        
+        .stat-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        /* Weekly Stats Inner */
+        .weekly-wrapper { padding: 1.5rem; }
+        .weekly-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-tertiary);
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+        }
+        .weekly-item { display: flex; flex-direction: column; }
+        .weekly-item .value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .weekly-item.contacted .value { color: var(--accent-secondary); }
+        .weekly-item.replied .value { color: #34d399; }
+        .weekly-item.booked .value { color: #fbbf24; }
+        .weekly-item .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid;
+            white-space: nowrap;
+        }
+        /* Dynamic Badge Generation inside JS will map to these */
+        .badge-new { background: var(--status-new-bg); color: var(--status-new-text); border-color: var(--status-new-border); }
+        .badge-contacted { background: var(--status-contacted-bg); color: var(--status-contacted-text); border-color: var(--status-contacted-border); }
+        .badge-replied { background: var(--status-replied-bg); color: var(--status-replied-text); border-color: var(--status-replied-border); }
+        .badge-booked { background: var(--status-booked-bg); color: var(--status-booked-text); border-color: var(--status-booked-border); }
+        .badge-dead { background: var(--status-dead-bg); color: var(--status-dead-text); border-color: var(--status-dead-border); }
+        .badge-inbound { background: var(--status-new-bg); color: var(--status-new-text); border-color: var(--status-new-border); }
+        .badge-outbound { background: var(--status-contacted-bg); color: var(--status-contacted-text); border-color: var(--status-contacted-border); }
+        .badge-active { background: var(--status-booked-bg); color: var(--status-booked-text); border-color: var(--status-booked-border); }
+        .badge-handed_off { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+        .badge-closed { background: var(--status-default-bg); color: var(--status-default-text); border-color: var(--status-default-border); }
+        .badge-unknown { background: var(--status-default-bg); color: var(--status-default-text); border-color: var(--status-default-border); }
+
+        /* Conversations List */
+        .conv-item {
+            cursor: pointer;
+            padding: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .conv-item:hover {
+            background: var(--bg-surface-hover);
+            border-color: rgba(127, 0, 255, 0.4);
+        }
+        .conv-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        .conv-info {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .conv-name {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: var(--text-primary);
+        }
+        .conv-contact {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        .conv-time {
+            color: var(--text-tertiary);
+            font-size: 0.75rem;
+            white-space: nowrap;
+            margin-left: 1rem;
+        }
+        .conv-preview {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Conversation Thread */
+        .thread-container {
+            margin: 0.5rem 0 1.5rem 1rem;
+            padding-left: 1rem;
+            border-left: 2px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        .chat-bubble {
+            padding: 1rem 1.25rem;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            position: relative;
+            max-width: 90%;
+            line-height: 1.4;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .chat-bubble-inbound {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+        }
+        
+        .chat-bubble-outbound {
+            background: linear-gradient(135deg, rgba(127,0,255,0.15), rgba(225,0,255,0.1));
+            border: 1px solid rgba(127,0,255,0.2);
+            border-bottom-right-radius: 4px;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .chat-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.4rem;
+        }
+        .chat-time {
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Error & Loading */
+        .error-msg {
+            color: var(--status-dead-text);
+            font-size: 0.9rem;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 3rem;
+        }
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Staggered Animations */
+        .fade-in-stagger {
+            opacity: 0;
+            animation: fadeUp 0.5s ease-out forwards;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body class="min-h-screen">
-    <div class="max-w-5xl mx-auto px-4 py-8">
+<body>
+    <div class="container">
         <!-- Header -->
-        <div class="text-center mb-10 relative">
-            <h1 class="text-3xl font-bold text-white mb-1">Your Results Dashboard</h1>
-            <p class="text-gray-500">Powered by LeadRecover</p>
-            <div class="absolute top-0 right-0">
-                <button onclick="window.location.href = `/auth/google/login?dashboard_token=${DASHBOARD_TOKEN}`" class="bg-white text-gray-900 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <div class="header fade-in-stagger" style="animation-delay: 0s;">
+            <h1 class="title">Results Dashboard</h1>
+            <p class="subtitle">Powered by LeadRecover AI</p>
+            <div class="header-actions">
+                <button onclick="window.location.href = `/auth/google/login?dashboard_token=${DASHBOARD_TOKEN}`" class="btn">
+                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                     Connect Calendar
                 </button>
             </div>
         </div>
         
-        <!-- Success Message -->
-        <div id="success-banner" class="hidden bg-green-900/50 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg mb-8 text-center text-sm">
+        <!-- Success Banner -->
+        <div id="success-banner" class="banner hidden">
             Google Calendar connected successfully! The AI can now check availability and book meetings for you.
         </div>
 
         <!-- Summary Cards -->
-        <div id="summary-cards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
+        <div id="summary-cards" class="grid grid-stats mb-8 fade-in-stagger" style="animation-delay: 0.1s;"></div>
 
         <!-- Weekly Stats -->
-        <div id="weekly-stats" class="card p-5 mb-8"></div>
+        <div id="weekly-stats" class="card weekly-wrapper mb-8 fade-in-stagger" style="animation-delay: 0.2s;"></div>
 
-        <!-- Conversations -->
-        <h2 class="text-lg font-semibold text-white mb-4">Conversations</h2>
-        <div id="conversations-list"></div>
+        <!-- Conversations Section -->
+        <h2 class="section-title fade-in-stagger" style="animation-delay: 0.3s;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            Live Conversations
+        </h2>
+        <div id="conversations-list" class="fade-in-stagger" style="animation-delay: 0.4s;"></div>
     </div>
 
     <script>
@@ -73,11 +464,12 @@
         const pathParts = window.location.pathname.split('/');
         const DASHBOARD_TOKEN = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
 
-        function badge(value) {
-            return `<span class="badge-${value || 'unknown'} text-xs font-medium px-2 py-0.5 rounded-full">${value || 'unknown'}</span>`;
+        function getBadge(value) {
+            const cls = `badge badge-${value || 'unknown'}`;
+            return `<span class="${cls}">${value || 'unknown'}</span>`;
         }
 
-        function loading() {
+        function getLoading() {
             return '<div class="loading"><div class="spinner"></div></div>';
         }
 
@@ -96,39 +488,51 @@
         async function loadSummary() {
             const cardsEl = document.getElementById('summary-cards');
             const weeklyEl = document.getElementById('weekly-stats');
-            cardsEl.innerHTML = loading();
+            cardsEl.innerHTML = getLoading();
 
             try {
                 const data = await api(`/client/${DASHBOARD_TOKEN}/api/summary`);
                 const counts = data.lead_counts || {};
-                const statuses = ['new', 'contacted', 'replied', 'booked', 'dead'];
-                const labels = { new: 'New Leads', contacted: 'Contacted', replied: 'Replied', booked: 'Booked', dead: 'Dead' };
-                const icons = { new: '📥', contacted: '📤', replied: '💬', booked: '📅', dead: '💀' };
+                const statuses = ['new', 'contacted', 'replied', 'booked'];
+                const labels = { new: 'New Leads', contacted: 'Contacted', replied: 'Replied', booked: 'Booked' };
+                const icons = { new: '📥', contacted: '📤', replied: '💬', booked: '📅' };
 
-                let cardsHtml = `<div class="stat-card p-5 col-span-2 md:col-span-1">
-                    <p class="text-3xl font-bold text-white">${data.total_leads}</p>
-                    <p class="text-sm text-gray-500 mt-1">Total Leads</p>
+                let cardsHtml = `
+                <div class="card stat-card total-leads">
+                    <p class="stat-value">${data.total_leads || 0}</p>
+                    <p class="stat-label">Total Leads</p>
                 </div>`;
-                statuses.forEach(s => {
-                    if (s === 'dead') return;
-                    cardsHtml += `<div class="stat-card p-5">
-                        <p class="text-2xl font-bold text-white">${counts[s] || 0}</p>
-                        <p class="text-sm text-gray-500 mt-1">${icons[s]} ${labels[s]}</p>
+                
+                statuses.forEach((s, idx) => {
+                    const delay = (0.1 + (idx * 0.05)).toFixed(2);
+                    cardsHtml += `
+                    <div class="card stat-card">
+                        <p class="stat-value">${counts[s] || 0}</p>
+                        <p class="stat-label">${icons[s]} ${labels[s]}</p>
                     </div>`;
                 });
                 cardsEl.innerHTML = cardsHtml;
 
                 const w = data.weekly || {};
                 weeklyEl.innerHTML = `
-                    <h3 class="text-sm font-semibold text-gray-400 mb-3">📊 This Week</h3>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div><p class="text-2xl font-bold text-indigo-400">${w.leads_contacted}</p><p class="text-xs text-gray-500">Leads Contacted</p></div>
-                        <div><p class="text-2xl font-bold text-green-400">${w.replies_received}</p><p class="text-xs text-gray-500">Replies Received</p></div>
-                        <div><p class="text-2xl font-bold text-amber-400">${w.appointments_booked}</p><p class="text-xs text-gray-500">Appointments Booked</p></div>
+                    <div class="weekly-title">This Week's Impact</div>
+                    <div class="grid grid-weekly">
+                        <div class="weekly-item contacted">
+                            <p class="value">${w.leads_contacted || 0}</p>
+                            <p class="label">Leads Contacted</p>
+                        </div>
+                        <div class="weekly-item replied">
+                            <p class="value">${w.replies_received || 0}</p>
+                            <p class="label">Replies Received</p>
+                        </div>
+                        <div class="weekly-item booked">
+                            <p class="value">${w.appointments_booked || 0}</p>
+                            <p class="label">Meetings Booked</p>
+                        </div>
                     </div>
                 `;
             } catch (e) {
-                cardsEl.innerHTML = `<div class="card p-6 text-red-400 col-span-4">Error loading summary: ${e.message}</div>`;
+                cardsEl.innerHTML = `<div class="card error-msg" style="grid-column: 1 / -1;">Error loading summary: ${e.message}</div>`;
                 weeklyEl.innerHTML = '';
             }
         }
@@ -136,13 +540,13 @@
         // ---------- Load Conversations ----------
         async function loadConversations() {
             const el = document.getElementById('conversations-list');
-            el.innerHTML = loading();
+            el.innerHTML = getLoading();
 
             try {
                 const data = await api(`/client/${DASHBOARD_TOKEN}/api/conversations`);
                 const convs = data.conversations || [];
                 if (!convs.length) {
-                    el.innerHTML = '<div class="card p-6 text-gray-500">No conversations yet.</div>';
+                    el.innerHTML = '<div class="card"><p class="text-secondary text-center">No active conversations yet.</p></div>';
                     return;
                 }
 
@@ -150,68 +554,74 @@
                 convs.forEach(c => {
                     const lead = c.leads || {};
                     const lastMsg = c.last_message;
-                    html += `<div class="card p-4 mb-3 cursor-pointer hover:border-indigo-500/50 transition-all" onclick="toggleConv('${c.id}')">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="font-medium text-white">${lead.name || '—'}</span>
-                                <span class="text-gray-500 text-sm ml-2">${lead.phone || lead.email || ''}</span>
-                                <span class="ml-2">${badge(c.channel)}</span>
-                                <span class="ml-1">${badge(c.status)}</span>
+                    
+                    html += `
+                    <div class="card conv-item" onclick="toggleConv('${c.id}')">
+                        <div class="conv-header">
+                            <div class="conv-info">
+                                <span class="conv-name">${lead.name || 'Unknown Lead'}</span>
+                                <span class="conv-contact">${lead.phone || lead.email || ''}</span>
+                                ${getBadge(c.channel)}
+                                ${getBadge(c.status)}
                             </div>
-                            <span class="text-gray-600 text-xs">${lastMsg ? formatDate(lastMsg.created_at) : ''}</span>
+                            <span class="conv-time">${lastMsg ? formatDate(lastMsg.created_at) : ''}</span>
                         </div>
-                        ${lastMsg ? `<p class="text-sm text-gray-400 mt-1 truncate">${badge(lastMsg.direction)} ${lastMsg.content}</p>` : ''}
-                    </div>`;
-                    html += `<div id="conv-thread-${c.id}" class="hidden mb-4"></div>`;
+                        ${lastMsg ? `
+                        <div class="conv-preview">
+                            ${getBadge(lastMsg.direction)} 
+                            <span class="truncate">${lastMsg.content}</span>
+                        </div>` : ''}
+                    </div>
+                    <div id="conv-thread-${c.id}" class="hidden thread-container"></div>
+                    `;
                 });
                 el.innerHTML = html;
             } catch (e) {
-                el.innerHTML = `<div class="card p-6 text-red-400">Error: ${e.message}</div>`;
+                el.innerHTML = `<div class="card error-msg">Error loading conversations: ${e.message}</div>`;
             }
         }
 
         let expandedConvId = null;
 
         async function toggleConv(convId) {
-            const threadEl = document.getElementById('conv-thread-' + convId);
+            const threadEl = document.getElementById(`conv-thread-${convId}`);
             if (expandedConvId === convId) {
                 threadEl.classList.add('hidden');
                 expandedConvId = null;
                 return;
             }
             if (expandedConvId) {
-                const prev = document.getElementById('conv-thread-' + expandedConvId);
+                const prev = document.getElementById(`conv-thread-${expandedConvId}`);
                 if (prev) prev.classList.add('hidden');
             }
+            
             expandedConvId = convId;
             threadEl.classList.remove('hidden');
-            threadEl.innerHTML = loading();
+            threadEl.innerHTML = getLoading();
 
             try {
                 const data = await api(`/client/${DASHBOARD_TOKEN}/api/conversations/${convId}/messages`);
-                let html = '<div class="pl-4 border-l-2 border-indigo-900 space-y-2">';
+                let html = '';
                 (data.messages || []).forEach(m => {
-                    const cls = m.direction === 'inbound' ? 'msg-inbound' : 'msg-outbound';
-                    const align = m.direction === 'outbound' ? 'ml-12' : 'mr-12';
-                    html += `<div class="${cls} ${align} p-3">
-                        <div class="flex justify-between items-center mb-1">
-                            ${badge(m.direction)}
-                            <span class="text-xs text-gray-600">${formatDate(m.created_at)}</span>
+                    const dirClass = m.direction === 'inbound' ? 'chat-bubble-inbound' : 'chat-bubble-outbound';
+                    html += `
+                    <div class="chat-bubble ${dirClass}">
+                        <div class="chat-meta">
+                            ${getBadge(m.direction)}
+                            <span class="chat-time">${formatDate(m.created_at)}</span>
                         </div>
-                        <p class="text-sm text-gray-200">${m.content}</p>
+                        <div>${m.content.replace(/\n/g, '<br>')}</div>
                     </div>`;
                 });
-                html += '</div>';
                 threadEl.innerHTML = html;
             } catch (e) {
-                threadEl.innerHTML = `<div class="text-red-400 text-sm p-2">Error: ${e.message}</div>`;
+                threadEl.innerHTML = `<div class="error-msg">Failed to load messages: ${e.message}</div>`;
             }
         }
 
         // ---------- Init ----------
         if (window.location.search.includes('calendar_connected=true')) {
             document.getElementById('success-banner').classList.remove('hidden');
-            // Clean up URL
             window.history.replaceState({}, document.title, window.location.pathname);
         }
         
