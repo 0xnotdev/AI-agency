@@ -17,9 +17,14 @@ def generate_reply(client_config: Dict[str, Any], conversation_history: List[Dic
     """
     Calls the LLM to generate a reply. Now handles function calling for Calendar APIs.
     """
-    system_prompt = f"""
-You are an AI assistant for {client_config.get('business_name', 'a business')}.
+    from datetime import datetime
+    
+    current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    system_prompt = f"""You are an AI assistant for {client_config.get('business_name', 'a business')}.
 Your role is to respond to incoming lead messages via SMS/WhatsApp/Email.
+
+The current date and time is {current_datetime} (UTC). When booking or checking availability, strictly use dates based on this current time.
 
 Business Services: {client_config.get('services', 'Not specified')}
 Pricing: {client_config.get('pricing_notes', 'Not specified')}
@@ -149,6 +154,7 @@ def _call_openrouter(system_prompt: str, conversation_history: List[Dict[str, An
                         slots = check_availability(calendar_tokens, client_id, args["start_time_iso"], args["end_time_iso"])
                         result = json.dumps(slots)
                     except Exception as e:
+                        logger.error(f"Error checking calendar: {str(e)}", exc_info=True)
                         result = f"Error checking calendar: {str(e)}"
             elif tool_call.function.name == "book_meeting_tool":
                 if not calendar_tokens:
