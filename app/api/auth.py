@@ -1,8 +1,11 @@
+import os
 from fastapi import APIRouter, Request, HTTPException, status
 from fastapi.responses import RedirectResponse
 from google_auth_oauthlib.flow import Flow
 from app.core.config import settings
 from app.core.db import get_service_client
+
+os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 router = APIRouter(tags=["auth"])
 
