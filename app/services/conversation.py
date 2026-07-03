@@ -92,7 +92,7 @@ def process_inbound_message(
                 "id": str(uuid4()),
                 "client_id": client_id,
                 "type": "error",
-                "payload": {"error": str(e), "conversation_id": conversation_id}
+                "payload": {"error": str(e) + " | " + repr(getattr(e, "last_attempt", None) and e.last_attempt.exception()), "conversation_id": conversation_id}
             }).execute()
             
             # Send Telegram alert for the crash
