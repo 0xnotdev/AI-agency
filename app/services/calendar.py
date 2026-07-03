@@ -22,7 +22,7 @@ def _get_valid_credentials(calendar_tokens: dict, client_id: str) -> Credentials
         token_uri=calendar_tokens.get("token_uri", "https://oauth2.googleapis.com/token"),
         client_id=calendar_tokens.get("client_id"),
         client_secret=calendar_tokens.get("client_secret"),
-        scopes=calendar_tokens.get("scopes", ["https://www.googleapis.com/auth/calendar.events"]),
+        scopes=calendar_tokens.get("scopes", ["https://www.googleapis.com/auth/calendar.events", "https://www.googleapis.com/auth/calendar.readonly"]),
         expiry=expiry
     )
     
