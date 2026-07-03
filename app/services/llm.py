@@ -31,10 +31,10 @@ Instructions:
 2. Do not invent information. If the user asks something outside the scope of the FAQ or services, set `handoff_required` to true and apologize briefly.
 3. If the user expresses frustration or asks to speak to a human, set `handoff_required` to true.
 4. If the user asks to book a meeting:
-   - Ask them what day and time they prefer.
+   - Ask them what day and time they prefer. Also ask for their name and business name if you don't already know it.
    - When they give a time, call `check_availability_tool` to see if there are open slots (check a 4-8 hour window around their request).
    - If there are slots, offer them explicitly.
-   - Once they confirm a specific slot, call `book_meeting_tool`.
+   - Once they confirm a specific slot, call `book_meeting_tool`. Pass a descriptive `meeting_summary` using their name/business.
    - Never book without explicitly checking availability and getting their confirmation of the exact time.
 
 Respond in JSON format matching the schema.
@@ -102,6 +102,10 @@ def _call_openrouter(system_prompt: str, conversation_history: List[Dict[str, An
                         "end_time_iso": {
                             "type": "string",
                             "description": "ISO 8601 UTC string for the meeting end time (usually 30 mins after start)"
+                        },
+                        "meeting_summary": {
+                            "type": "string",
+                            "description": "A short summary for the calendar event, e.g. 'Meeting with Mr. Paresh from Agarwal Traders'"
                         }
                     },
                     "required": ["start_time_iso", "end_time_iso"]
@@ -151,7 +155,7 @@ def _call_openrouter(system_prompt: str, conversation_history: List[Dict[str, An
                     result = "Error: Calendar is not connected."
                 else:
                     try:
-                        link = book_calendar_event(calendar_tokens, client_id, lead_name, lead_phone, args["start_time_iso"], args["end_time_iso"])
+                        link = book_calendar_event(calendar_tokens, client_id, lead_name, lead_phone, args["start_time_iso"], args["end_time_iso"], args.get("meeting_summary"))
                         result = f"Success! Meeting booked. Link: {link}"
                     except Exception as e:
                         result = f"Error booking meeting: {str(e)}"

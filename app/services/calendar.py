@@ -116,7 +116,7 @@ def check_availability(calendar_tokens: dict, client_id: str, start_time: str, e
     return available_slots
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-def book_calendar_event(calendar_tokens: dict, client_id: str, lead_name: str, lead_phone: str, start_time: str, end_time: str) -> str:
+def book_calendar_event(calendar_tokens: dict, client_id: str, lead_name: str, lead_phone: str, start_time: str, end_time: str, meeting_summary: str = None) -> str:
     """
     Books a calendar event using the client's stored OAuth tokens.
     start_time and end_time should be ISO 8601 strings.
@@ -128,7 +128,7 @@ def book_calendar_event(calendar_tokens: dict, client_id: str, lead_name: str, l
     creds = _get_valid_credentials(calendar_tokens, client_id)
     
     event_payload = {
-        "summary": f"Meeting with {lead_name}",
+        "summary": meeting_summary if meeting_summary else f"Meeting with {lead_name}",
         "description": f"Lead Phone: {lead_phone}\nBooked by LeadRecover AI",
         "start": {
             "dateTime": start_time,
