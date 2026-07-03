@@ -178,4 +178,4 @@ google-auth-oauthlib
 
 google-auth-oauthlib
 
-google-genai
+openai

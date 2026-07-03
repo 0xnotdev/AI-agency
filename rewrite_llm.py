@@ -1,54 +1,14 @@
-import logging
-import json
-from typing import List, Dict, Any
-from pydantic import BaseModel
-from tenacity import retry, stop_after_attempt, wait_exponential
-from app.core.config import settings
-from app.services.calendar import check_availability, book_calendar_event
+﻿import json
+import re
 
-logger = logging.getLogger(__name__)
+content = open('app/services/llm.py', 'r', encoding='utf-8').read()
 
-class LLMResponse(BaseModel):
-    reply_text: str
-    handoff_required: bool
+# Replace if LLM_PROVIDER.lower() == "gemini" with "openrouter"
+content = content.replace('settings.LLM_PROVIDER.lower() == "gemini"', 'settings.LLM_PROVIDER.lower() == "openrouter"')
+content = content.replace('return _call_gemini(system_prompt, conversation_history, new_message, client_config, lead_name, lead_phone)', 'return _call_openrouter(system_prompt, conversation_history, new_message, client_config, lead_name, lead_phone)')
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-def generate_reply(client_config: Dict[str, Any], conversation_history: List[Dict[str, Any]], new_message: str, lead_name: str, lead_phone: str) -> LLMResponse:
-    """
-    Calls the LLM to generate a reply. Now handles function calling for Calendar APIs.
-    """
-    system_prompt = f"""
-You are an AI assistant for {client_config.get('business_name', 'a business')}.
-Your role is to respond to incoming lead messages via SMS/WhatsApp/Email.
-
-Business Services: {client_config.get('services', 'Not specified')}
-Pricing: {client_config.get('pricing_notes', 'Not specified')}
-FAQ: {client_config.get('faq', 'Not specified')}
-Tone: {client_config.get('tone_instructions', 'professional and helpful')}
-
-Instructions:
-1. Provide a helpful, concise answer to the user's latest message based on the FAQ and services.
-2. Do not invent information. If the user asks something outside the scope of the FAQ or services, set `handoff_required` to true and apologize briefly.
-3. If the user expresses frustration or asks to speak to a human, set `handoff_required` to true.
-4. If the user asks to book a meeting:
-   - Ask them what day and time they prefer.
-   - When they give a time, call `check_availability_tool` to see if there are open slots (check a 4-8 hour window around their request).
-   - If there are slots, offer them explicitly.
-   - Once they confirm a specific slot, call `book_meeting_tool`.
-   - Never book without explicitly checking availability and getting their confirmation of the exact time.
-
-Respond in JSON format matching the schema.
-    """
-    
-    if settings.LLM_PROVIDER.lower() == "openrouter":
-        return _call_openrouter(system_prompt, conversation_history, new_message, client_config, lead_name, lead_phone)
-    elif settings.LLM_PROVIDER.lower() == "anthropic":
-        return _call_anthropic(system_prompt, conversation_history, new_message)
-    else:
-        raise ValueError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
-
-
-
+# Write the new function
+openrouter_func = '''
 def _call_openrouter(system_prompt: str, conversation_history: List[Dict[str, Any]], new_message: str, client_config: Dict[str, Any], lead_name: str, lead_phone: str) -> LLMResponse:
     import json
     from openai import OpenAI
@@ -203,8 +163,9 @@ def _call_openrouter(system_prompt: str, conversation_history: List[Dict[str, An
         logger.error(f"Failed to parse JSON: {json_response.choices[0].message.content}")
         # Fallback
         return LLMResponse(reply_text=final_text, handoff_required=True)
+'''
 
+# Delete the _call_gemini function completely
+content = re.sub(r'def _call_gemini.*?return LLMResponse\.model_validate_json\(json_response\.text\)', openrouter_func, content, flags=re.DOTALL)
 
-
-def _call_anthropic(system_prompt: str, conversation_history: List[Dict[str, Any]], new_message: str) -> LLMResponse:
-    raise NotImplementedError("Anthropic provider is not yet implemented.")
+open('app/services/llm.py', 'w', encoding='utf-8').write(content)

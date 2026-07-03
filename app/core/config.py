@@ -7,7 +7,8 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str
     
     # Task 2 vars
-    LLM_PROVIDER: str = "gemini" # gemini or anthropic
+    LLM_PROVIDER: str = "openrouter" # openrouter, gemini or anthropic
+    OPENROUTER_API_KEY: str | None = None
     GEMINI_API_KEY: str | None = None
     ANTHROPIC_API_KEY: str | None = None
     META_WEBHOOK_VERIFY_TOKEN: str | None = "test-token"
