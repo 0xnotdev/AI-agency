@@ -10,16 +10,26 @@ logger = logging.getLogger(__name__)
 
 def _get_valid_credentials(calendar_tokens: dict, client_id: str) -> Credentials:
     """Helper to get valid credentials, refreshing and saving if necessary."""
+    
+    # Parse expiry if it exists
+    expiry = None
+    if calendar_tokens.get("expiry"):
+        expiry = datetime.fromisoformat(calendar_tokens.get("expiry").replace('Z', '+00:00'))
+        
     creds = Credentials(
         token=calendar_tokens.get("token"),
         refresh_token=calendar_tokens.get("refresh_token"),
         token_uri=calendar_tokens.get("token_uri", "https://oauth2.googleapis.com/token"),
         client_id=calendar_tokens.get("client_id"),
         client_secret=calendar_tokens.get("client_secret"),
-        scopes=calendar_tokens.get("scopes", ["https://www.googleapis.com/auth/calendar.events"])
+        scopes=calendar_tokens.get("scopes", ["https://www.googleapis.com/auth/calendar.events"]),
+        expiry=expiry
     )
     
-    if creds.expired and creds.refresh_token:
+    # If expiry is None, creds.expired is False. We must treat None as expired to force a refresh.
+    is_expired = creds.expired if creds.expiry else True
+    
+    if is_expired and creds.refresh_token:
         logger.info(f"Refreshing Google Calendar tokens for client {client_id}")
         creds.refresh(GoogleAuthRequest())
         
@@ -30,7 +40,8 @@ def _get_valid_credentials(calendar_tokens: dict, client_id: str) -> Credentials
             "token_uri": creds.token_uri,
             "client_id": creds.client_id,
             "client_secret": creds.client_secret,
-            "scopes": creds.scopes
+            "scopes": creds.scopes,
+            "expiry": creds.expiry.isoformat() if creds.expiry else None
         }
         service = get_service_client()
         service.table("client_configs").update({
