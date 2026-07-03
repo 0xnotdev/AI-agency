@@ -4,7 +4,6 @@ from app.core.db import get_client_scoped_client
 from app.services.llm import generate_reply
 from app.services.whatsapp import send_whatsapp_message
 from app.services.email import send_email_reply
-from app.services.calendar import book_calendar_event
 from app.core.alerts import send_telegram_alert
 
 logger = logging.getLogger(__name__)
@@ -45,22 +44,8 @@ def process_inbound_message(
             
         new_message_content = last_message["content"]
         
-        # 3. Call LLM
-        llm_response = generate_reply(client_config, history, new_message_content)
-        
-        # 4. Handle Calendar Booking
-        if llm_response.book_calendar:
-            try:
-                event_link = book_calendar_event(
-                    client_config.get("google_calendar_tokens"),
-                    lead_name,
-                    contact_info
-                )
-                llm_response.reply_text += f"\n\nI have booked your appointment! Details: {event_link}"
-            except Exception as e:
-                logger.error(f"Calendar booking failed: {e}")
-                llm_response.reply_text += "\n\nI tried to book your appointment, but something went wrong. A human will reach out to confirm."
-                llm_response.handoff_required = True
+        # 3. Call LLM (which now internally handles Calendar Function Calling)
+        llm_response = generate_reply(client_config, history, new_message_content, lead_name, contact_info)
         
         # 5. Send Reply via Channel
         try:

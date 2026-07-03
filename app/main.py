@@ -5,7 +5,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from app.api import webhooks, health, admin
+from app.api import webhooks, health, admin, auth
 from app.core.logging import setup_logging, logger
 
 # Setup logging
@@ -18,6 +18,7 @@ app = FastAPI(title="Lead Response Platform")
 app.include_router(health.router)
 app.include_router(webhooks.router)
 app.include_router(admin.router)
+app.include_router(auth.router)
 
 # Middleware for structured access logging and latency
 @app.middleware("http")
