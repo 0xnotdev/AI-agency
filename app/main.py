@@ -198,7 +198,7 @@ async def api_test_webhook(req: ChatRequest):
 
 @app.get("/api/chat-history")
 async def get_chat_history():
-    from app.core.db import get_client_scoped_client
+    from app.core.db import get_client_scoped_client, get_service_client
     # Hardcoded client ID for testing based on phone number ID
     
     service_client = get_service_client()
