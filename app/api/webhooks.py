@@ -81,6 +81,18 @@ async def handle_whatsapp(request: Request):
         changes = entry.get("changes", [])[0]
         value = changes.get("value", {})
         
+        
+        # DEBUG: Dump raw payload to events table
+        try:
+            service_client = get_service_client()
+            service_client.table("events").insert({
+                "client_id": "ac7a26b7-3522-4fcf-b37f-7d68176c906f", # Hardcoded test client
+                "type": "raw_webhook_dump",
+                "payload": payload
+            }).execute()
+        except Exception as e:
+            logger.error(f"Failed to dump payload: {e}")
+            
         if "messages" not in value:
             return {"status": "ok"} # Not a message event (could be status update)
             
