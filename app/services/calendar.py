@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from tenacity import retry, stop_after_attempt, wait_exponential
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request as GoogleAuthRequest
+from dateutil import parser
 from app.core.db import get_service_client
 
 logger = logging.getLogger(__name__)
@@ -62,12 +63,21 @@ def check_availability(calendar_tokens: dict, client_id: str, start_time: str, e
         
     creds = _get_valid_credentials(calendar_tokens, client_id)
     
-    # Convert string to datetime and ensure they are timezone-aware
-    dt_start = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+    # Convert string to datetime and ensure they are timezone-aware using a robust parser
+    try:
+        dt_start = parser.parse(start_time)
+    except Exception:
+        # Fallback if parser completely fails
+        dt_start = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+        
     if dt_start.tzinfo is None:
         dt_start = dt_start.replace(tzinfo=timezone.utc)
         
-    dt_end = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+    try:
+        dt_end = parser.parse(end_time)
+    except Exception:
+        dt_end = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+        
     if dt_end.tzinfo is None:
         dt_end = dt_end.replace(tzinfo=timezone.utc)
         
