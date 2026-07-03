@@ -73,8 +73,9 @@ async def google_callback(request: Request):
     
     try:
         flow = get_google_flow(state=state)
-        # Fetch token (we need to pass the full url to flow, but without http on localhost sometimes causes issues, so we pass string)
-        flow.fetch_token(authorization_response=str(request.url))
+        # Fetch token (Force https since Railway terminates SSL and passes it internally as http)
+        auth_url = str(request.url).replace('http://', 'https://')
+        flow.fetch_token(authorization_response=auth_url)
         credentials = flow.credentials
         
         tokens_dict = {
