@@ -85,12 +85,19 @@ async def handle_whatsapp(request: Request):
             return {"status": "ok"} # Not a message event (could be status update)
             
         message_data = value["messages"][0]
-        contact_data = value["contacts"][0]
+        contact_data = value.get("contacts", [{}])[0]
         
-        external_message_id = message_data["id"]
-        contact_phone = message_data["from"]
-        lead_name = contact_data["profile"]["name"]
-        text_content = message_data.get("text", {}).get("body", "")
+        external_message_id = message_data.get("id", str(uuid4()))
+        contact_phone = message_data.get("from", "")
+        lead_name = contact_data.get("profile", {}).get("name", "Unknown")
+        
+        # Handle text or button responses
+        if message_data.get("type") == "button":
+            text_content = message_data.get("button", {}).get("text", "")
+        elif message_data.get("type") == "interactive":
+            text_content = message_data.get("interactive", {}).get("button_reply", {}).get("title", "")
+        else:
+            text_content = message_data.get("text", {}).get("body", "")
         
         # Phone ID indicates which business account received this (used to lookup client)
         phone_number_id = value["metadata"]["phone_number_id"]
