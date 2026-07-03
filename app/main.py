@@ -200,7 +200,11 @@ async def api_test_webhook(req: ChatRequest):
 async def get_chat_history():
     from app.core.db import get_client_scoped_client
     # Hardcoded client ID for testing based on phone number ID
-    client_id = "0c2264c3-568b-4bcf-a54f-178619bc9e5d" # We will fetch latest conversation for this client
+    
+    service_client = get_service_client()
+    config_resp = service_client.table("client_configs").select("client_id").limit(1).execute()
+    client_id = config_resp.data[0]["client_id"]
+ # We will fetch latest conversation for this client
     scoped = get_client_scoped_client(client_id)
     
     # Find lead by phone
