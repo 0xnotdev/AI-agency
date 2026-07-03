@@ -184,14 +184,15 @@ async def api_test_webhook(req: ChatRequest):
       }]
     }
     
-    # Internal HTTP request to the webhook endpoint
+    # Internal HTTP request to the webhook endpoint using async httpx to prevent deadlock
+    import httpx
     try:
-        req_obj = urllib.request.Request(
-            'https://ai-agency-production-a6a9.up.railway.app/webhooks/whatsapp', 
-            data=json.dumps(payload).encode(),
-            headers={'Content-Type': 'application/json'}
-        )
-        urllib.request.urlopen(req_obj)
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                'https://ai-agency-production-a6a9.up.railway.app/webhooks/whatsapp',
+                json=payload,
+                timeout=5.0
+            )
     except Exception as e:
         pass
     return {"status": "ok"}
