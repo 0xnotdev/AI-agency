@@ -179,3 +179,4 @@ google-auth-oauthlib
 google-auth-oauthlib
 
 openai
+python-multipart
