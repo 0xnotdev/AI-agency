@@ -203,7 +203,8 @@ async def get_chat_history():
     # Hardcoded client ID for testing based on phone number ID
     
     service_client = get_service_client()
-    config_resp = service_client.table("client_configs").select("client_id").limit(1).execute()
+    config_resp = service_client.table("client_configs").select("client_id").eq("whatsapp_phone_number_id", "1152249817976388").limit(1).execute()
+    if not config_resp.data: return []
     client_id = config_resp.data[0]["client_id"]
  # We will fetch latest conversation for this client
     scoped = get_client_scoped_client(client_id)
